@@ -109,7 +109,7 @@ class BaseFinetuningDataLoader(object):
 
         return train_loader, val_loader, test_loader
 
-    def normization(self, X: np.ndarray) -> np.ndarray:
+    def normalization(self, X: np.ndarray) -> np.ndarray:
         """Normalize the dataset to have zero mean and unit variance."""
         # Create the scaler from sklearn
         scaler = StandardScaler()
@@ -146,6 +146,32 @@ class RML2016DataLoader(BaseFinetuningDataLoader):
             "QAM64",
             "QPSK",
             "WBFM",
+        ]
+
+    @property
+    def snr_list(self) -> List[int]:
+        """Return the list of SNR values in the RML2016.10a dataset."""
+        return [
+            -20,
+            -18,
+            -16,
+            -14,
+            -12,
+            -10,
+            -8,
+            -6,
+            -4,
+            -2,
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
         ]
 
     def load(self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None):
@@ -195,15 +221,15 @@ class RML2016DataLoader(BaseFinetuningDataLoader):
 
         # Create the dataset objects and do normalization
         train_dataset = ModulationFineTuningDataset(
-            features=torch.FloatTensor(self.normization(X_train)),
+            features=torch.FloatTensor(self.normalization(X_train)),
             labels=torch.LongTensor(y_train),
         )
         val_dataset = ModulationFineTuningDataset(
-            features=torch.FloatTensor(self.normization(X_val)),
+            features=torch.FloatTensor(self.normalization(X_val)),
             labels=torch.LongTensor(y_val),
         )
         test_dataset = ModulationFineTuningDataset(
-            features=torch.FloatTensor(self.normization(X_test)),
+            features=torch.FloatTensor(self.normalization(X_test)),
             labels=torch.LongTensor(y_test),
         )
 
@@ -215,3 +241,18 @@ class RML2016DataLoader(BaseFinetuningDataLoader):
             batch_size=batch_size,
             shuffle=shuffle,
         )
+
+
+class RML2018DataLoader(BaseFinetuningDataLoader):
+    """Data loader for the RML2018.01a dataset."""
+
+    def __init__(self, configs) -> None:
+        super().__init__(configs)
+
+
+class PreTrainingDataLoader(object):
+    """Data loader for pre-training datasets."""
+
+    def __init__(self, configs) -> None:
+        super().__init__()
+        self.configs = configs
