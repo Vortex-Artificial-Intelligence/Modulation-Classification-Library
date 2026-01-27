@@ -66,7 +66,9 @@ class BaseDataLoader(object):
         self.val_batch_size = 128
 
         # Fix the split ratio
-        self.split_ratio = [0.6, 0.2, 0.2]  # train, val, test
+        self.train_ratio = configs.split_ratio
+        self.test_ratio = self.val_ratio = (1 - self.split_ratio) / 2
+        self.split_ratio = [self.train_ratio, self.test_ratio, self.val_ratio]  # train, val, test
 
     @classmethod
     def load_pkl(cls, file_path: str) -> Dict:

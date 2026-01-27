@@ -18,12 +18,16 @@ class Model(nn.Module):
     ) -> None:
         super(Model, self).__init__()
 
+        # 输入序列的长度 128 1024
         self.seq_len = configs.seq_len
+        
+        # 分类的类别数目
         self.n_classes = configs.n_classes
 
         # The demension of features model and feedforward in transformer
         self.d_model = configs.d_model
         self.d_ff = configs.d_ff
+        
         # The number of heads in multi-head attention
         self.n_heads = configs.n_heads
 
@@ -57,7 +61,7 @@ class Model(nn.Module):
             nn.Linear(self.d_ff, self.n_classes),
         )
 
-    def forward(self, x_enc: torch.FloatTensor) -> tuple:
+    def forward(self, x_enc: torch.FloatTensor) -> torch.FloatTensor:
         # Get the embedding of data
         x_enc = self.embedding(x_enc)
         x_enc = torch.squeeze(x_enc, dim=2)
@@ -85,9 +89,11 @@ if __name__ == "__main__":
         n_layers = 4
         dropout = 0.1
 
+    print("Building model...")
     model = Model(configs=Configs())
 
     inputs = torch.rand((4, 2, 128))
+    print("Input shape:", inputs.shape)
     outputs = model(inputs)
 
-    print(outputs.shape)
+    print("Output shape:", outputs.shape)

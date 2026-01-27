@@ -43,6 +43,12 @@ parser.add_argument(
     help="The path to the root directory of the dataset",
 )
 parser.add_argument(
+    "--data_path",
+    type=str,
+    default="./dataset/hello.csv",
+    help="The path of the training and testing dataset for supervised learning.",
+)
+parser.add_argument(
     "--checkpoint",
     type=str,
     default="./checkpoints",
