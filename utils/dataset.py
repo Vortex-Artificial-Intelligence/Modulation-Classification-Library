@@ -86,6 +86,11 @@ class BaseDataLoader(object):
             open(file_path, "rb"), encoding="iso-8859-1"
         )  # Xd2(22W,2,128)
 
+    @classmethod
+    def load_h5py(cls, file_path: str) -> Dict:
+        """Load a .h5py file and return its content as a dictionary."""
+        return h5py.File(file_path, "r")
+
     def get_data_loader(
         self,
         train_dataset: ModulationFineTuningDataset,
@@ -187,7 +192,9 @@ class RML2016aDataLoader(BaseDataLoader):
             18,
         ]
 
-    def load(self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None):
+    def load(
+        self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None
+    ) -> None:
         """Load the RML2016.10a dataset and return data loaders."""
         # Load the dataset
         data_dict = self.load_pkl(file_path=self.file_path)
@@ -261,7 +268,6 @@ class RML2016aDataLoader(BaseDataLoader):
 class RML2016bDataLoader(BaseDataLoader):
     """Data loader for the RML2016.10b dataset."""
 
-
     def __init__(self, configs) -> None:
         super().__init__(configs)
 
@@ -306,8 +312,10 @@ class RML2016bDataLoader(BaseDataLoader):
             16,
             18,
         ]
-    
-    def load(self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None):
+
+    def load(
+        self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None
+    ) -> None:
         """Load the RML2016.10b dataset and return data loaders."""
         # Load the dataset
         data_dict = self.load_dat(file_path=self.file_path)
@@ -386,13 +394,118 @@ class PreTrainingDataLoader(object):
         self.configs = configs
 
 
-
 class RML2018aDataLoader(BaseDataLoader):
     """Data loader for the RML2018.10a dataset."""
-    
+
     def __init__(self, configs) -> None:
         super().__init__(configs)
-        
-        
-    
-    
+
+    @property
+    def class_list(self) -> List[str]:
+        """Return the list of modulation classes in the RML2016.10b dataset."""
+        return [
+            "OOK",
+            "4ASK",
+            "8ASK",
+            "BPSK",
+            "QPSK",
+            "8PSK",
+            "16PSK",
+            "32PSK",
+            "16APSK",
+            "32APSK",
+            "64APSK",
+            "128APSK",
+            "16QAM",
+            "32QAM",
+            "64QAM",
+            "128QAM",
+            "256QAM",
+            "AM-SSB-WC",
+            "AM-SSB-SC",
+            "AM-DSB-WC",
+            "AM-DSB-SC",
+            "FM",
+            "GMSK",
+            "OQPSK",
+        ]
+
+    @property
+    def snr_list(self) -> List[int]:
+        """Return the list of SNR values in the RML2016.10b dataset."""
+        return [
+            -20,
+            -18,
+            -16,
+            -14,
+            -12,
+            -10,
+            -8,
+            -6,
+            -4,
+            -2,
+            0,
+            2,
+            4,
+            6,
+            8,
+            10,
+            12,
+            14,
+            16,
+            18,
+            20,
+            22,
+            24,
+            26,
+            28,
+            30,
+        ]
+
+    def load(
+        self, batch_size: Optional[int] = None, shuffle: Optional[bool] = None
+    ) -> None:
+
+        data = self.load_h5py(self.file_path)
+
+        X = data["X"]
+        y = np.argmax(data["Y"], axis=1)
+
+        # Get the SNR of the data
+        idx_snr = np.where(np.array(data["Z"]).flatten() == self.snr)[0]
+
+        # 获取指定的SNR下的数据
+        X = np.transpose(X[idx_snr], (0, 2, 1))
+        y = y[idx_snr]
+
+        # 划分训练集, 验证集和测试集
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=self.train_ratio
+        )
+
+        X_val, X_test, y_val, y_test = train_test_split(
+            X_test, y_test, test_size=self.val_ratio
+        )
+
+        # Create the dataset objects and do normalization
+        train_dataset = ModulationFineTuningDataset(
+            features=torch.FloatTensor(self.normalization(X_train)),
+            labels=torch.LongTensor(y_train),
+        )
+        val_dataset = ModulationFineTuningDataset(
+            features=torch.FloatTensor(self.normalization(X_val)),
+            labels=torch.LongTensor(y_val),
+        )
+        test_dataset = ModulationFineTuningDataset(
+            features=torch.FloatTensor(self.normalization(X_test)),
+            labels=torch.LongTensor(y_test),
+        )
+
+        # Return the data loaders
+        return self.get_data_loader(
+            train_dataset=train_dataset,
+            val_dataset=val_dataset,
+            test_dataset=test_dataset,
+            batch_size=batch_size,
+            shuffle=shuffle,
+        )
