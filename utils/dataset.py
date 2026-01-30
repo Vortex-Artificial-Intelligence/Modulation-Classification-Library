@@ -11,8 +11,6 @@ from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 
-from tqdm import tqdm
-
 import pickle, h5py
 
 
@@ -66,13 +64,9 @@ class BaseDataLoader(object):
         self.val_batch_size = 128
 
         # Fix the split ratio
-        self.train_ratio = configs.split_ratio
-        self.test_ratio = self.val_ratio = (1 - configs.split_ratio) / 2
-        self.split_ratio = [
-            self.train_ratio,
-            self.test_ratio,
-            self.val_ratio,
-        ]  # train, val, test
+        self.train_split = configs.split_ratio / 3 * 5
+        # Get the data for testing
+        self.val_test_split_ratio = 0.4
 
     @classmethod
     def load_pkl(cls, file_path: str) -> Dict:
@@ -219,12 +213,20 @@ class RML2016aDataLoader(BaseDataLoader):
 
             # 划分出训练集的比例为60%
             X_train, X_temp, y_train, y_temp = train_test_split(
-                X, y, train_size=self.train_ratio, random_state=42
+                X,
+                y,
+                test_size=self.val_test_split_ratio,
             )
+
+            # 对训练数据集进行进一步的划分
+            if self.configs.split_ratio != 0.6:
+                X_train, _, y_train, _ = train_test_split(
+                    X_train, y_train, train_size=self.train_split
+                )
 
             # 将剩余的40%的数据平均划分为测试集和验证集
             X_val, X_test, y_val, y_test = train_test_split(
-                X_temp, y_temp, test_size=0.5, random_state=42
+                X_temp, y_temp, test_size=0.5
             )
 
             X_train_list.append(X_train)
@@ -340,12 +342,20 @@ class RML2016bDataLoader(BaseDataLoader):
 
             # 划分出训练集的比例为60%
             X_train, X_temp, y_train, y_temp = train_test_split(
-                X, y, train_size=self.train_ratio, random_state=42
+                X,
+                y,
+                test_size=self.val_test_split_ratio,
             )
+
+            # 对训练数据集进行进一步的划分
+            if self.configs.split_ratio != 0.6:
+                X_train, _, y_train, _ = train_test_split(
+                    X_train, y_train, train_size=self.train_split
+                )
 
             # 将剩余的40%的数据平均划分为测试集和验证集
             X_val, X_test, y_val, y_test = train_test_split(
-                X_temp, y_temp, test_size=0.5, random_state=42
+                X_temp, y_temp, test_size=0.5
             )
 
             X_train_list.append(X_train)
@@ -480,8 +490,16 @@ class RML2018aDataLoader(BaseDataLoader):
 
         # 划分训练集, 验证集和测试集
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, train_size=self.train_ratio
+            X,
+            y,
+            test_size=self.val_test_split_ratio,
         )
+
+        # 对训练数据集进行进一步的划分
+        if self.configs.split_ratio != 0.6:
+            X_train, X_val, y_train, y_val = train_test_split(
+                X_train, y_train, train_size=self.train_split
+            )
 
         X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.5)
 

@@ -1,9 +1,13 @@
 export CUDA_VISIBLE_DEVICES=3
 
+# The model name and training dataset
 model=MCformer
 dataset=RML2016a
 
-for snr in {0..18..2}
+# The split ratio for the training dataset
+split_ratio=0.6
+
+for snr in {-20..18..2}
 do
   for batch_size in 32 64 16 
   do
@@ -21,7 +25,7 @@ do
         --learning_rate $learning_rate \
         --optimizer adam \
         --criterion cross_entropy \
-        --split_ratio 0.6 \
+        --split_ratio $split_ratio \
         --warmup_epochs 0 \
         --d_model 128 \
         --d_ff 256 \
