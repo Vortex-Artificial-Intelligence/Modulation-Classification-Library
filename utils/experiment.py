@@ -42,6 +42,7 @@ class BaseExperiment(ABC):
         super().__init__()
         self.configs = configs
         self.accelerator = accelerator
+        self.setting = setting
 
         self.model_name = configs.model
 
@@ -199,9 +200,9 @@ class BaseExperiment(ABC):
                 obj={
                     "predictions": predictions,
                     "targets": targets,
-                    "accuracy": accuracy,
+                    "accuracy": torch.tensor(accuracy),
                     "confusion_matrix": confusion_matrix,
-                    "time_mean": time_mean,
+                    "time_mean": torch.tensor(time_mean),
                 },
                 f=results_path,
                 safe_serialization=True,
@@ -215,17 +216,19 @@ class BaseExperiment(ABC):
             "Timestamp",
             "Dataset",
             "Model",
-            "Mode",  # The mode for the model
-            "Accuracy",  # The Accuracy of Classification
+            "SNR",
+            "Accuracy",
+            "Time",
             "split_ratio",
             "seq_len",
-            "Loss_function",
-            "Optimizer",
-            "Learning_rate",
-            "Batch_size",
+            "n_classes",
+            "criterion",
+            "optimizer",
+            "learning_rate",
+            "batch_size",
             "setting",
             "seed",
-            "path",  # The path to the saved checkpoint and results
+            "path",
         ]
 
     def logging(
@@ -241,7 +244,7 @@ class BaseExperiment(ABC):
             messages = {
                 "Timestamp": time_now,
                 "Dataset": self.configs.dataset,
-                "Model": self.model,
+                "Model": self.model_name,
                 "SNR": self.configs.snr,
                 "Accuracy": accuracy,
                 "Time": time_mean,
@@ -462,7 +465,7 @@ class SupervisedExperiment(BaseExperiment):
         num_samples = predictions.shape[0]
 
         _, predicted = torch.max(predictions, dim=1)
-        accuracy += torch.eq(predicted, targets).sum() / num_samples
+        accuracy = torch.eq(predicted, targets).sum() / num_samples
 
         return accuracy.item(), predictions, targets, np.mean(time_list)
 
@@ -523,7 +526,9 @@ class SupervisedExperiment(BaseExperiment):
 
         # 计算混淆矩阵
         confusion_matrix = get_confusion_matrix(
-            predictions=predictions, targets=targets, num_classes=self.num_classes
+            predictions=torch.max(predictions, dim=1)[1],
+            targets=targets,
+            n_classes=self.n_classes,
         )
 
         # save the all results in experiment
@@ -532,6 +537,7 @@ class SupervisedExperiment(BaseExperiment):
             targets=targets,
             confusion_matrix=confusion_matrix,
             time_mean=time_mean,
+            accuracy=accuracy,
         )
 
         # logging the results to csv file

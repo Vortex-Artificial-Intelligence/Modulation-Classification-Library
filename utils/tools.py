@@ -413,7 +413,7 @@ def get_confusion_matrix(
 
     # 计算混淆矩阵（labels确保类别顺序）
     labels = np.arange(n_classes) if n_classes else None
-    cm_np = confusion_matrix(predictions_np, targets_np, labels=labels)
+    cm_np = confusion_matrix(y_pred=predictions_np, y_true=targets_np, labels=labels)
 
     # 转回PyTorch张量
     cm_tensor = torch.from_numpy(cm_np)

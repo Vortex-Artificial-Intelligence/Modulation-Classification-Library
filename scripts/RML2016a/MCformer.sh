@@ -1,15 +1,32 @@
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=3
 
 model=MCformer
 dataset=RML2016a
 
-python main.py \
-  --model $model \
-  --dataset $dataset \
-  --file_path dataset/RML2016.10a_dict.pkl \
-  --batch_size 16 \
-  --num_epochs 50 \
-  --learning_rate 0.0001 \
-  --optimizer adam \
-  --criterion cross_entropy \
-  --patience 5 \
+for snr in {0..18..2}
+do
+  for batch_size in 32 64 16 
+  do
+    for learning_rate in 0.0001 0.00005 0.000025 0.00001
+    do
+      clear
+      echo "model: $model, dataset: $dataset, SNR: $snr, batch_size: $batch_size, learning_rate: $learning_rate"
+      python main.py \
+        --model $model \
+        --dataset $dataset \
+        --snr $snr \
+        --file_path dataset/RML2016.10a_dict.pkl \
+        --batch_size $batch_size \
+        --num_epochs 64 \
+        --learning_rate $learning_rate \
+        --optimizer adam \
+        --criterion cross_entropy \
+        --split_ratio 0.6 \
+        --warmup_epochs 0 \
+        --d_model 128 \
+        --d_ff 256 \
+        --n_layers 3 \
+        --patience 10
+    done
+  done
+done
