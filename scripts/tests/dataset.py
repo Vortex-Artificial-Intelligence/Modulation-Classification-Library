@@ -1,6 +1,6 @@
 import unittest
 
-from utils.dataset import RML2016aDataLoader, RML2016bDataLoader
+from utils.dataset import RML2016aDataLoader, RML2016bDataLoader, RML2018aDataLoader
 
 
 class DataSetConfigs(object):
@@ -80,6 +80,36 @@ class TestDataset(unittest.TestCase):
         self.assertEqual(train_num / num_data, 0.6)
         self.assertEqual(val_num / num_data, 0.2)
         self.assertEqual(test_num / num_data, 0.2)
+
+    def test_load_RML2018a(self) -> None:
+        configs = DataSetConfigs(
+            dataset="RML2018a",
+            file_path="dataset/GOLD_XYZ_OSC.0001_1024.hdf5",
+            root_path=None,
+        )
+        train_loader, val_loader, test_loader = RML2018aDataLoader(configs).load()
+
+        # 获取用于正向传播的数据
+        for i, (data, label) in enumerate(train_loader):
+            break
+
+        n_channels = data.shape[1]
+        seq_len = data.shape[2]
+
+        # 检验数据的格式是否正确
+        self.assertEqual(n_channels, 2)
+        self.assertEqual(seq_len, 1024)
+
+        # 检验数据集分配的比例是否正确
+        train_num, val_num, test_num = (
+            len(train_loader.dataset),
+            len(val_loader.dataset),
+            len(test_loader.dataset),
+        )
+        num_data = train_num + val_num + test_num
+        self.assertAlmostEqual(train_num / num_data, 0.6, places=4)
+        self.assertAlmostEqual(val_num / num_data, 0.2, places=4)
+        self.assertAlmostEqual(test_num / num_data, 0.2, places=4)
 
 
 if __name__ == "__main__":

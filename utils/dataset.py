@@ -219,7 +219,7 @@ class RML2016aDataLoader(BaseDataLoader):
 
             # 划分出训练集的比例为60%
             X_train, X_temp, y_train, y_temp = train_test_split(
-                X, y, test_size=0.4, random_state=42
+                X, y, train_size=self.train_ratio, random_state=42
             )
 
             # 将剩余的40%的数据平均划分为测试集和验证集
@@ -340,7 +340,7 @@ class RML2016bDataLoader(BaseDataLoader):
 
             # 划分出训练集的比例为60%
             X_train, X_temp, y_train, y_temp = train_test_split(
-                X, y, test_size=0.4, random_state=42
+                X, y, train_size=self.train_ratio, random_state=42
             )
 
             # 将剩余的40%的数据平均划分为测试集和验证集
@@ -472,7 +472,7 @@ class RML2018aDataLoader(BaseDataLoader):
         y = np.argmax(data["Y"], axis=1)
 
         # Get the SNR of the data
-        idx_snr = np.where(np.array(data["Z"]).flatten() == self.snr)[0]
+        idx_snr = np.where(np.array(data["Z"]).flatten() == self.target_snr)[0]
 
         # 获取指定的SNR下的数据
         X = np.transpose(X[idx_snr], (0, 2, 1))
@@ -480,12 +480,10 @@ class RML2018aDataLoader(BaseDataLoader):
 
         # 划分训练集, 验证集和测试集
         X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=self.train_ratio
+            X, y, train_size=self.train_ratio
         )
 
-        X_val, X_test, y_val, y_test = train_test_split(
-            X_test, y_test, test_size=self.val_ratio
-        )
+        X_val, X_test, y_val, y_test = train_test_split(X_test, y_test, test_size=0.5)
 
         # Create the dataset objects and do normalization
         train_dataset = ModulationFineTuningDataset(
